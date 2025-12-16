@@ -1,13 +1,23 @@
 <script setup>
     import Borderline from './Borderline.vue'
-    import WeatherForecastDay from './WeatherForecastDay.vue';
+    import WeatherForecastDay from './WeatherForecastDay.vue'
+    import WeatherInfo from './WeatherInfo.vue';
 
     defineProps({
         place: Object
     })
+
+    const emit = defineEmits([`delete-place`])
+
+    const showDetail = ref (false)
+
+    const removePlace = (placeName) => {
+        emit('delete-place', placeName)
+        showDetail.value = false
+    }
 </script>
 <template>
-    <div class="text-white p-10 rounded-lg shadow-lg mb-6 relative overflow-hidden bg-blue-500">
+    <div :class="place.current.is_day === 1 ? 'bg-day' : 'bg-night'" class="text-white p-10 rounded-lg shadow-lg mb-6 relative overflow-hidden">
         <!-- location and time-->
          <div class="mb-2 flex justify-between items-center">
             <div class="flex items-center justify-center gap-2">
@@ -25,7 +35,7 @@
         <!-- current weather-->        
         <div class="text-center flex-1">
             <img :src="place.current.condition.icon" alt="icon" width="200" class="mx-auto -mb-10" />
-            <h1 class="text-9x1 mb-2">{{Math.round(place.current.temp_c)}}&deg;</h1>
+            <h1 class="text-9x1 mb-2 -mr-4">{{Math.round(place.current.temp_c)}}&deg;</h1>
             <p class="tetx-2x1">{{place.current.condition.text}}</p>
         </div>
 
@@ -34,15 +44,49 @@
         <!--forecast-->
         <div>
             <!-- weather daily forecast components -->
-             <div v-for="day in place.forecast.forecastday" :key="idx">
+             <div v-for="(day, idx) in place.forecast.forecastday" :key="idx">
                 <WeatherForecastDay :day="day" />
              </div>
         </div>
 
         <!-- info -->
+         <transition name="fade">
+         <div v-show="showDetail">
+            <!-- weather info component goes here-->
+             <WeatherInfo 
+             :place="place" 
+             @close-info="showDetail = false" 
+             @remove-place="removePlace(place.location.name)"
+             />
+         </div>
+         </transition>
+
+         <!-- forecast btn-->
         <div class="flex justify-end item-center gap-1 mt-10">
-            <button>More <i class="fa-solid fa-arrow-right text-sm -mb-px"></i>
-            </button>
+            <button @click="showDetail = true">
+                More <i class="fa-solid fa-arrow-right text-sm -mb-px"></i></button>
         </div>
     </div>
  </template>
+
+ <style scoped>
+    
+    .bg-day {
+  background-color: #8ec5fc;
+  background-image: linear-gradient(62deg, #8ec5fc 0%, #e0c3fc 100%);
+}
+    .bg-night {
+  background-color: #07223d;
+  background-image: linear-gradient(62deg, #0a2a4a 0%, #270845 100%);
+}
+
+    .fade-enter-active, 
+    .fade-leave-active {
+        transition: opacity 0.2s ease;
+    }
+
+    .fade-enter-from,
+    .fade-leave-to {
+        opacity: 0;
+    }
+ </style>
